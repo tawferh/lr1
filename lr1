@@ -1,0 +1,92 @@
+import numpy as np
+from PIL import Image, ImageOps
+import math
+#2
+def draw_line(image, x0, y0, x1, y1, count, color):
+    # Алгоритм отрисовки линии
+    step = 1.0/count
+    for t in np.arange(0, 1 + step, step):  # Изменено на +step, чтобы включить последний момент
+        x = round((1.0 - t) * x0 + t * x1)
+        y = round((1.0 - t) * y0 + t * y1)
+        if 0 <= x < image.shape[1] and 0 <= y < image.shape[0]:  # Ограничения по границам
+            image[y, x] = color
+'''
+def main():
+
+    H = 200
+    W = 200
+    matr = np.zeros((H, W, 3), dtype=np.uint8)
+    for i in range(0,13):
+        x0, y0 = 100, 100
+        x1,y1 =100 + 95 * math.cos(2 * math.pi * i / 13),100 + 95 * math.sin(2 * math.pi * i / 13)
+        draw_line(matr, x0, y0, x1, y1, 100, (255, 255, 255))
+    img = Image.fromarray(matr, 'RGB')
+    img.save('frame.png')
+    img.show()
+'''
+    
+ #3
+def main2():
+    H = 1000
+    W = 1000
+    matr = np.zeros((H, W, 3), dtype=np.uint8)
+
+    with open('model_1.obj', 'r') as file:
+        list_v=[]
+        for line in file:
+            if line.startswith('v '):  # Обработка только строк с вершинами
+                s = line.split()
+                if s[0] == 'v':
+                    list_v.append((float(s[1]), float(s[2]), float(s[3])))
+
+    for v in list_v:
+        x = int(50 * v[0] + 500)  # Шкалирование и смещение
+        y = int(50 * v[1] + 500)
+        if 0 <= x < W and 0 <= y < H:
+            matr[y, x] = (255, 255, 255)  # Заливаем пиксель
+
+    img = Image.fromarray(matr, 'RGB')
+    img.save('vertices_frame.png')
+    img.show()
+
+#4-6
+def main3():
+    H=4000
+    W=4000
+    matr = np.zeros((H,W,3) ,dtype = np.uint8)
+
+    model = open('model_1.obj')
+    list_v, list_f = [], []
+
+    for line in model:
+        s = line.split()
+        if s[0] == 'v':
+            list_v.append((float(s[1]), float(s[2]), float(s[3]))) #вершины
+        elif s[0] == 'f':
+            
+            indices = [int(vertex.split('/')[0]) for vertex in s[1:]]
+            list_f.append(tuple(indices)) #грани из индексов вершин
+    model.close()
+            
+
+    #отрисовка ребер полигона
+    for parts in list_f:
+        for i in range(len(parts)):
+            v1_index = parts[i] - 1  # Индекс вершины (с учетом смещения на 0)
+            v2_index = parts[(i + 1) % len(parts)] - 1  # Индекс следующей вершины, замыкание
+
+            # Получаем координаты вершин
+            x0 = int((list_v[v1_index][0] * 20000) + 2000)  # Масштабирование и смещение
+            y0 = int((list_v[v1_index][1] * 20000) + 800)
+            x1 = int((list_v[v2_index][0] * 20000) + 2000)  # Масштабирование и смещение
+            y1 = int((list_v[v2_index][1] * 20000) + 800)
+
+            # Отрисовка рёбер между вершинами
+            draw_line(matr, int(x0), int(y0), int(x1), int(y1), 100, (255, 255, 255))  # Увеличение количества точек для плавной линии
+
+    img = Image.fromarray(matr, 'RGB')
+    img=ImageOps.flip(img)
+    img.save('polugons_frame.png')
+    img.show()
+   
+main3()
